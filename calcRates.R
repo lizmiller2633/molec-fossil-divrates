@@ -46,19 +46,19 @@ calcRates<-function(AgeMatrix,Rate="Origination") {
 ########################################### SCRIPT, mole-fossil-rates #######################################
 # Download from the API
 CanonicalTaxa<-c("Bivalvia","Gastropoda","Anthozoa","Brachiopoda","Trilobita","Bryozoa","Nautiloidea","Ammonoidea","Crinoidea","Blastoidea","Edrioasteroidea")
-CanonicalPBDB<-downloadPBDB(CanonicalTaxa,"Cambrian","Pleistocene")
+CanonicalPBDB<-velociraptr::downloadPBDB(CanonicalTaxa,"Cambrian","Pleistocene")
 
 # Clean and simplify the data
-CanonicalPBDB<-velociraptr::cleanRank(CanonicalPBDB,"genus")
-# Remove blank geoplate occurrences
-CanonicalPBDB<-subset(CanonicalPBDB,is.na(CanonicalPBDB[,"geoplate"])!=TRUE)
+CanonicalPBDB<-velociraptr::cleanTaxonomy(CanonicalPBDB,"genus")
+# Remove occurrences with invalid paleocoordinates
+CanonicalPBDB<-subset(CanonicalPBDB,is.na(CanonicalPBDB[,"paleolat"])!=TRUE)
 # Remove unnecessary columns for increased performance
 CanonicalPBDB<-CanonicalPBDB[,c("genus","family","class","early_interval","late_interval","max_ma","min_ma","paleolat","paleolng","geoplate")]
 
 # Download ages timescale
 Ages<-velociraptr::downloadTime("international%20ages")
 
-# Sort and constrain ages and epochs
+# Sort and constrain ages
 CanonicalStages<-velociraptr::constrainAges(CanonicalPBDB,Ages)
 # Remove intervals with too few occurrences
 CanonicalStages<-subset(CanonicalStages,CanonicalStages[,"early_interval"]%in%names(which(table(CanonicalStages[,"early_interval"])>=1000))==TRUE)
@@ -71,7 +71,7 @@ GlobalQ<-calcRates(BinStatus,"Extinction")
 GlobalP<-calcRates(BinStatus,"Origination")
 
 # Clean up NaN and Inf for youngest and oldest interval
-GlobalQ[is.infinite(GlobalQ) | is.nan(GlobalQ)] <- NA
+GlobalQ[is.infinite(GlobalQ) | is.nan(GlobalQ)] <-NA
 GlobalP[is.infinite(GlobalP) | is.nan(GlobalP)] <-NA
 
 # Merge Rates with Ages
