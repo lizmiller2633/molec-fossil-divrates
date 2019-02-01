@@ -31,22 +31,6 @@ assignStatus<-function(AgeMatrix) {
 	return(AgeMatrix)
 	}
 
-# Assign the Footeian status of in-bin occurrences	
-assignStatus<-function(Data,Intervals=Epochs) {
-	AgeMatrix<-t(velociraptr::presenceMatrix(Data,"early_interval"))
-	# Subset the data to only include intervals in both arguments
-	Intervals<-subset(Intervals,Intervals[,"name"]%in%colnames(AgeMatrix)==TRUE)
-	AgeMatrix<-AgeMatrix[,as.character(Intervals[,"name"])]
-	for (i in 1:nrow(AgeMatrix)) {
-		AgeMatrix[i,which(AgeMatrix[i,]==1)[1]]<-2
-		AgeMatrix[i,rev(which(AgeMatrix[i,]>0))[1]]<-3
-		if (length(which(AgeMatrix[i,]==2))==0) {
-			AgeMatrix[i,which(AgeMatrix[i,]==3)]<-4
-			}
-		}
-	return(AgeMatrix)
-	}
-	
 # Calculat p and q
 calcRates<-function(AgeMatrix,Rate="Origination") {
 	Rates<-switch(Rate,
@@ -136,3 +120,7 @@ SectionsP<-calcRates(FooteSections,"Origination")
 # Clean up NaN and Inf for youngest and oldest interval
 SectionsQ[is.infinite(SectionsQ) | is.nan(SectionsQ)] <-NA
 SectionsP[is.infinite(SectionsP) | is.nan(SectionsP)] <-NA
+
+# Reformat into the tab-separated values file required by PyRate
+TruncateQ<-cbind(time=2:541,truncation=SectionsQ[2:541])
+TruncateP<-cbind(time=2:541,truncation=SectionsP[2:541])
