@@ -17,8 +17,20 @@ if (suppressWarnings(require("velociraptr"))==FALSE) {
         }
 
 #############################################################################################################
-########################################### FUNCTIONS, mole-fossil-rates ####################################
+############################################## FUNCTIONS, FOSSIL-RATES ######################################
 #############################################################################################################
+# Assign the Footeian status of in-bin occurrences	
+assignStatus<-function(AgeMatrix) {
+	for (i in 1:nrow(AgeMatrix)) {
+		AgeMatrix[i,which(AgeMatrix[i,]==1)[1]]<-2
+		AgeMatrix[i,rev(which(AgeMatrix[i,]>0))[1]]<-3
+		if (length(which(AgeMatrix[i,]==2))==0) {
+			AgeMatrix[i,which(AgeMatrix[i,]==3)]<-4
+			}
+		}
+	return(AgeMatrix)
+	}
+
 # Assign the Footeian status of in-bin occurrences	
 assignStatus<-function(Data,Intervals=Epochs) {
 	AgeMatrix<-t(velociraptr::presenceMatrix(Data,"early_interval"))
@@ -43,8 +55,9 @@ calcRates<-function(AgeMatrix,Rate="Origination") {
 		)
 	return(-log(Rates))
 	}
-########################################### SCRIPT, mole-fossil-rates #######################################
-# Download from the API
+		    
+############################################### SCRIPT, FOSSIL-RATES ########################################
+# Download fossil data from the pbdb API
 CanonicalTaxa<-c("Bivalvia","Gastropoda","Anthozoa","Brachiopoda","Trilobita","Bryozoa","Nautiloidea","Ammonoidea","Crinoidea","Blastoidea","Edrioasteroidea")
 CanonicalPBDB<-velociraptr::downloadPBDB(CanonicalTaxa,"Cambrian","Pleistocene")
 
@@ -62,26 +75,64 @@ Ages<-velociraptr::downloadTime("international%20ages")
 CanonicalStages<-velociraptr::constrainAges(CanonicalPBDB,Ages)
 # Remove intervals with too few occurrences
 CanonicalStages<-subset(CanonicalStages,CanonicalStages[,"early_interval"]%in%names(which(table(CanonicalStages[,"early_interval"])>=1000))==TRUE)
-
+# Convert into presence matrix
+CanonicalStages<-velociraptr::presenceMatrix(CanonicalStages,Rows="genus",Columns="early_interval")
+# Sort the order of the intervals to be from youngest-oldest/left-right
+CanonicalStages<-CanonicalStages[,rownames(subset(Ages,Ages[,"name"]%in%colnames(CanonicalStages)))]				    
+				    
 # For each stage, calculate whether a taxon is within-bin, through-bin, start-bin, or end-bin category of Foote
-BinStatus<-assignStatus(CanonicalStages,Ages)
+FooteFossils<-assignStatus(CanonicalStages)
 
 # Calculate the origination and extinction rate, respecitvely
-GlobalQ<-calcRates(BinStatus,"Extinction")
-GlobalP<-calcRates(BinStatus,"Origination")
+FossilQ<-calcRates(FooteFossils,"Extinction")
+FossilP<-calcRates(FooteFossils,"Origination")
 
 # Clean up NaN and Inf for youngest and oldest interval
-GlobalQ[is.infinite(GlobalQ) | is.nan(GlobalQ)] <-NA
-GlobalP[is.infinite(GlobalP) | is.nan(GlobalP)] <-NA
+FossilQ[is.infinite(FossilQ) | is.nan(FossilQ)] <-NA
+FossilP[is.infinite(FossilP) | is.nan(FossilP)] <-NA
 
 # Merge Rates with Ages
-GlobalQ<-transform(merge(as.data.frame(GlobalQ),Ages,by="row.names",all=FALSE),row.names=Row.names,Row.names=NULL)
-GlobalP<-transform(merge(as.data.frame(GlobalP),Ages,by="row.names",all=FALSE),row.names=Row.names,Row.names=NULL)
+FossilQ<-transform(merge(as.data.frame(FossilQ),Ages,by="row.names",all=FALSE),row.names=Row.names,Row.names=NULL)
+FossilP<-transform(merge(as.data.frame(FossilP),Ages,by="row.names",all=FALSE),row.names=Row.names,Row.names=NULL)
 
 # Convert to Rates (i.e., by time)
-GlobalQ[,"GlobalQ"]<-GlobalQ[,"GlobalQ"]/(GlobalQ[,"b_age"]-GlobalQ[,"t_age"])
-GlobalP[,"GlobalP"]<-GlobalP[,"GlobalP"]/(GlobalP[,"b_age"]-GlobalP[,"t_age"])
+FossilQ[,"GlobalQ"]<-FossilQ[,"GlobalQ"]/(FossilQ[,"b_age"]-FossilQ[,"t_age"])
+FossilP[,"GlobalP"]<-FossilP[,"GlobalP"]/(FossilP[,"b_age"]-FossilP[,"t_age"])
 
 # Reorder the dataset
-GlobalQ<-GlobalQ[order(GlobalQ[,"Midpoint"]),]
-GlobalP<-GlobalP[order(GlobalP[,"Midpoint"]),]
+FossilQ<-FossilQ[order(FossilQ[,"Midpoint"]),]
+FossilP<-FossilP[order(FossilP[,"Midpoint"]),]
+
+#############################################################################################################
+############################################# FUNCTIONS, TRUNCATION-RATES ###################################
+#############################################################################################################
+# This is a hasty rewrite of some older	for analyzing macrostrat data. This simply converts the range-through of
+# Macrostrat "sections" - i.e., "gap-bound-packages" - as our proxy of truncation rates
+# Sections by Time matrix	
+timeSections<-function(Data) {
+	Data<-Data[,c("section_id","b_age","t_age")]
+	Data<-na.omit(Data)
+	Data[,"b_age"]<-ceiling(Data[,"b_age"])
+	Data[,"t_age"]<-floor(Data[,"t_age"])	
+	Data<-Data[!duplicated(Data),] # Why didn't I use unique( ), we will never know
+	FinalMatrix<-matrix(0,nrow=nrow(Data),ncol=ceiling(max(Data[,"b_age"])))
+	colnames(FinalMatrix)<-1:ncol(FinalMatrix)
+	rownames(FinalMatrix)<-Data[,"section_id"]
+	for (i in 1:nrow(Data)) {
+		FinalMatrix[i,Data[i,"t_age"]:Data[i,"b_age"]]<-1
+		}
+	return(FinalMatrix)
+	}			    
+				    
+############################################# SCRIPT, TRUNCATION-RATES ######################################
+# Download north american sections
+CanonicalSections<-read.csv("https://macrostrat.org/api/sections?format=csv&project_id=1")
+FooteSections<-assignStatus(timeSections(CanonicalSections))				    
+
+# Calculate the origination and extinction rate, respecitvely
+SectionsQ<-calcRates(FooteSections,"Extinction")
+SectionsP<-calcRates(FooteSections,"Origination")
+
+# Clean up NaN and Inf for youngest and oldest interval
+SectionsQ[is.infinite(SectionsQ) | is.nan(SectionsQ)] <-NA
+SectionsP[is.infinite(SectionsP) | is.nan(SectionsP)] <-NA
