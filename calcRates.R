@@ -98,7 +98,7 @@ timeSections<-function(Data) {
 	Data<-na.omit(Data)
 	Data[,"b_age"]<-ceiling(Data[,"b_age"])
 	Data[,"t_age"]<-floor(Data[,"t_age"])	
-	Data<-Data[!duplicated(Data),] # Why didn't I use unique( ), we will never know
+	Data<-Data[!duplicated(Data),] # Why didn't I use unique( )? We will never know
 	FinalMatrix<-matrix(0,nrow=nrow(Data),ncol=ceiling(max(Data[,"b_age"])))
 	colnames(FinalMatrix)<-1:ncol(FinalMatrix)
 	rownames(FinalMatrix)<-Data[,"section_id"]
@@ -106,21 +106,60 @@ timeSections<-function(Data) {
 		FinalMatrix[i,Data[i,"t_age"]:Data[i,"b_age"]]<-1
 		}
 	return(FinalMatrix)
+	}
+
+# Sum range through
+sumbt<-function(x,y=Areas) {
+	Weights<-y/sum(y)
+	bt<-Weights[which(x==1)]
+	return(sum(bt))
+	}
+
+# sum origination denominator
+sumFt<-function(x,y=Areas) {
+	Weights<-y/sum(y)
+	Ft<-Weights[which(x==1 | x==3)]
+	return(sum(Ft))
+	}
+
+# sum extinction denominator
+sumbL<-function(x,y=Areas) {
+	Weights<-y/sum(y)
+	bL<-Weights[which(x==2 | x==1)]
+	return(sum(bL))
+	}
+
+# Calculat p and q
+weightedRates<-function(AgeMatrix,Rate="Origination",Areas) {
+	Rates<-switch(Rate,
+		"Origination"=apply(AgeMatrix,2,function(col) sumbt(col,Areas)/sumFt(col,Areas)),
+		"Extinction"=apply(AgeMatrix,2,function(col) sumbt(col,Areas)/sumbL(col,Areas))
+		)
+	return(-log(Rates))
 	}			    
 				    
 ############################################# SCRIPT, TRUNCATION-RATES ######################################
 # Download north american sections
-CanonicalSections<-read.csv("https://macrostrat.org/api/sections?format=csv&project_id=1")
-FooteSections<-assignStatus(timeSections(CanonicalSections))				    
+CanonicalSections<-read.csv("https://macrostrat.org/api/sections?format=csv&project_id=1",stringsAsFactors=FALSE)
+
+# Assign each section to the 4 foote categories - e.g., range-through, singleton, etc.
+FooteSections<-assignStatus(timeSections(CanonicalSections))
+# Extract column areas for each section
+Areas<-CanonicalSections[match(rownames(FooteSections),CanonicalSections[,"section_id"]),"col_area"]				    
 
 # Calculate the origination and extinction rate, respecitvely
-SectionsQ<-calcRates(FooteSections,"Extinction")
-SectionsP<-calcRates(FooteSections,"Origination")
+SectionsQ<-weightedRates(FooteSections,"Extinction",Areas)
+SectionsP<-weightedRates(FooteSections,"Origination",Areas)
+
+# Calculate the origination and extinction rate, respecitvely
+# SectionsQ<-calcRates(FooteSections,"Extinction")
+# SectionsP<-calcRates(FooteSections,"Origination")
 
 # Clean up NaN and Inf for youngest and oldest interval
-SectionsQ[is.infinite(SectionsQ) | is.nan(SectionsQ)] <-NA
-SectionsP[is.infinite(SectionsP) | is.nan(SectionsP)] <-NA
+SectionsQ[is.infinite(SectionsQ) | is.nan(SectionsQ)] <- NA
+SectionsP[is.infinite(SectionsP) | is.nan(SectionsP)] <- NA
 
 # Reformat into the tab-separated values file required by PyRate
 TruncateQ<-cbind(time=2:541,truncation=SectionsQ[2:541])
 TruncateP<-cbind(time=2:541,truncation=SectionsP[2:541])
+
