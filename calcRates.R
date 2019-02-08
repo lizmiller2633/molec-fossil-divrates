@@ -163,3 +163,28 @@ SectionsP[is.infinite(SectionsP) | is.nan(SectionsP)] <- NA
 TruncateQ<-cbind(time=2:541,truncation=SectionsQ[2:541])
 TruncateP<-cbind(time=2:541,truncation=SectionsP[2:541])
 
+#############################################################################################################
+######################################### FUNCTIONS, PLOTTING TIME-SERIES ###################################
+#############################################################################################################
+# For plotting continuous time-series 	
+plotContinuous<-function(TimeVector,Intervals=Ages,VerticalLabel="index",Single=TRUE) {
+ 	if (Single) {par(oma=c(1.5,0.5,0.5,0),mar=c(3,3,2,0.5),mgp=c(2,0.5,0))}
+ 	String<-deparse(substitute(TimeVector))
+	Title<-gsub('(?<=[a-z])(?=[A-Z])', ' ', String, perl = TRUE)
+	Maximum<-max(TimeVector)
+	Minimum<-0-(Maximum*0.06)
+	# I knew hardcoding these would bite me in the ass someday...
+ 	plot(y=TimeVector,x=1:length(TimeVector),type="l",lwd=3,xlim=c(541,0),las=1,ylim=c(Minimum,Maximum*1.06),ylab=VerticalLabel,xlab="time",yaxs="i",xaxs="i",main=Title,cex.axis=1.25)
+	for (i in 1:nrow(Intervals)) {
+		rect(Intervals[i,"t_age"],0,Intervals[i,"b_age"],Minimum,col=as.character(Intervals[i,"color"]))
+		}
+	}
+
+######################################### FUNCTIONS, PLOTTING TIME-SERIES ###################################
+# Plot the sediment p through time
+SedimentOrigination<-SectionsP[2:541]
+plotContinuous(SedimentOrigination,Ages,"p")
+
+# Plot the sediment q through time
+SedimentExtinction<-SectionsQ[2:541]
+plotContinuous(SedimentExtinction,Ages,"q")
