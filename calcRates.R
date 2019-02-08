@@ -110,21 +110,21 @@ timeSections<-function(Data) {
 
 # Sum range through
 sumbt<-function(x,y=Areas) {
-	Weights<-y/sum(y)
+	Weights<-y[which(y>0)]/sum(y[which(y>0)])
 	bt<-Weights[which(x==1)]
 	return(sum(bt))
 	}
 
 # sum origination denominator
 sumFt<-function(x,y=Areas) {
-	Weights<-y/sum(y)
+	Weights<-y[which(y>0)]/sum(y[which(y>0)])
 	Ft<-Weights[which(x==1 | x==3)]
 	return(sum(Ft))
 	}
 
 # sum extinction denominator
 sumbL<-function(x,y=Areas) {
-	Weights<-y/sum(y)
+	Weights<-y[which(y>0)]/sum(y[which(y>0)])
 	bL<-Weights[which(x==2 | x==1)]
 	return(sum(bL))
 	}
