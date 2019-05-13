@@ -108,24 +108,24 @@ timeSections<-function(Data) {
 	return(FinalMatrix)
 	}
 
+# I am honeslty unclear in these calculations whether it whould be x or y > 0 that should be used to calculate the weights
+# The former means weigthting towards only the relevant area, and y means against everything... 				    
+				    
 # Sum range through
 sumbt<-function(x,y=Areas) {
-	Weights<-y[which(y>0)]/sum(y[which(y>0)])
-	bt<-Weights[which(x==1)]
+	bt<-y[which(x==1)]
 	return(sum(bt))
 	}
 
 # sum origination denominator
 sumFt<-function(x,y=Areas) {
-	Weights<-y[which(y>0)]/sum(y[which(y>0)])
-	Ft<-Weights[which(x==1 | x==3)]
+	Ft<-y[which(x==1 | x==3)]
 	return(sum(Ft))
 	}
 
 # sum extinction denominator
 sumbL<-function(x,y=Areas) {
-	Weights<-y[which(y>0)]/sum(y[which(y>0)])
-	bL<-Weights[which(x==2 | x==1)]
+	bL<-y[which(x==2 | x==1)]
 	return(sum(bL))
 	}
 
@@ -145,7 +145,7 @@ CanonicalSections<-read.csv("https://macrostrat.org/api/sections?format=csv&proj
 # Assign each section to the 4 foote categories - e.g., range-through, singleton, etc.
 FooteSections<-assignStatus(timeSections(CanonicalSections))
 # Extract column areas for each section
-Areas<-CanonicalSections[match(rownames(FooteSections),CanonicalSections[,"section_id"]),"col_area"]				    
+Areas<-CanonicalSections[match(rownames(FooteSections),CanonicalSections[,"section_id"]),"col_area"]/sum(unique(CanonicalSections[,c("col_id","col_area")])[,"col_area"])				    
 
 # Calculate the origination and extinction rate, respecitvely
 SectionsQ<-weightedRates(FooteSections,"Extinction",Areas)
@@ -178,7 +178,7 @@ plotContinuous<-function(TimeVector,Intervals=Ages,VerticalLabel="index",Single=
 	Maximum<-max(TimeVector)
 	Minimum<-0-(Maximum*0.06)
 	# I knew hardcoding these would bite me in the ass someday...
- 	plot(y=TimeVector,x=1:length(TimeVector),type="l",lwd=3,xlim=c(541,0),las=1,ylim=c(Minimum,Maximum*1.06),ylab=VerticalLabel,xlab="time",yaxs="i",xaxs="i",main=Title,cex.axis=1.25)
+ 	plot(y=TimeVector,x=1:length(TimeVector),type="l",lwd=3,xlim=c(252,0),las=1,ylim=c(Minimum,Maximum*1.06),ylab=VerticalLabel,xlab="time",yaxs="i",xaxs="i",main=Title,cex.axis=1.25)
 	for (i in 1:nrow(Intervals)) {
 		rect(Intervals[i,"t_age"],0,Intervals[i,"b_age"],Minimum,col=as.character(Intervals[i,"color"]))
 		}
