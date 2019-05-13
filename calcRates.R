@@ -140,7 +140,7 @@ weightedRates<-function(AgeMatrix,Rate="Origination",Areas) {
 				    
 ############################################# SCRIPT, TRUNCATION-RATES ######################################
 # Download north american sections
-CanonicalSections<-read.csv("https://macrostrat.org/api/sections?format=csv&project_id=1",stringsAsFactors=FALSE)
+CanonicalSections<-read.csv("https://macrostrat.org/api/sections?environ_class=marine&format=csv&project_id=1",stringsAsFactors=FALSE)
 
 # Assign each section to the 4 foote categories - e.g., range-through, singleton, etc.
 FooteSections<-assignStatus(timeSections(CanonicalSections))
