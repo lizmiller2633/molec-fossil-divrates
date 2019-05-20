@@ -160,8 +160,8 @@ SectionsQ[is.infinite(SectionsQ) | is.nan(SectionsQ)] <- NA
 SectionsP[is.infinite(SectionsP) | is.nan(SectionsP)] <- NA
 
 # Reformat into the tab-separated values file required by PyRate
-TruncateQ<-cbind(time=1:252,truncation=SectionsQ[2:253])
-TruncateP<-cbind(time=1:252,initiation=SectionsP[2:253])
+TruncateQ<-cbind(time=1:540,truncation=SectionsQ[2:541])
+TruncateP<-cbind(time=1:540,initiation=SectionsP[2:541])
 				    
 # Write out the result
 write.table(TruncateQ,"sediment_truncation.txt",sep="\t",row.names=FALSE)
