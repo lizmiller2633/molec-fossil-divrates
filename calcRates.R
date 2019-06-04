@@ -80,8 +80,8 @@ FossilQ<-transform(merge(as.data.frame(FossilQ),Ages,by="row.names",all=FALSE),r
 FossilP<-transform(merge(as.data.frame(FossilP),Ages,by="row.names",all=FALSE),row.names=Row.names,Row.names=NULL)
 
 # Convert to Rates (i.e., by time)
-FossilQ[,"GlobalQ"]<-FossilQ[,"GlobalQ"]/(FossilQ[,"b_age"]-FossilQ[,"t_age"])
-FossilP[,"GlobalP"]<-FossilP[,"GlobalP"]/(FossilP[,"b_age"]-FossilP[,"t_age"])
+FossilQ[,"GlobalQ"]<-FossilQ[,"FossilQ"]/(FossilQ[,"b_age"]-FossilQ[,"t_age"])
+FossilP[,"GlobalP"]<-FossilP[,"FossilP"]/(FossilP[,"b_age"]-FossilP[,"t_age"])
 
 # Reorder the dataset
 FossilQ<-FossilQ[order(FossilQ[,"Midpoint"]),]
