@@ -178,7 +178,7 @@ plotContinuous<-function(TimeVector,Intervals=Ages,VerticalLabel="index",Single=
 	Maximum<-max(TimeVector)
 	Minimum<-0-(Maximum*0.06)
 	# I knew hardcoding these would bite me in the ass someday...
- 	plot(y=TimeVector,x=1:length(TimeVector),type="l",lwd=3,xlim=c(252,0),las=1,ylim=c(Minimum,Maximum*1.06),ylab=VerticalLabel,xlab="time",yaxs="i",xaxs="i",main=Title,cex.axis=1.25)
+ 	plot(y=TimeVector,x=1:length(TimeVector),type="l",lwd=3,xlim=c(541,0),las=1,ylim=c(Minimum,Maximum*1.06),ylab=VerticalLabel,xlab="time",yaxs="i",xaxs="i",main=Title,cex.axis=1.25)
 	for (i in 1:nrow(Intervals)) {
 		rect(Intervals[i,"t_age"],0,Intervals[i,"b_age"],Minimum,col=as.character(Intervals[i,"color"]))
 		}
